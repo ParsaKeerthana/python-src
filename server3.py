@@ -27,20 +27,25 @@ class BasicServer:
 
     def run(self):
         addr = (self.ipaddr, self.port)
-        with socket.create_server(addr) as self._svr:
-            self._svr.listen(10)
-            print(f"Server ({self.ipaddr}) is listening on {self.port}")
+        try:
+            with socket.create_server(addr) as self._svr:
+                self._svr.listen(10)
+                print(f"Server ({self.ipaddr}) is listening on {self.port}")
 
-            try:
                 while self.good:
                     cltconn, caddr = self._svr.accept()
                     print(f"Connection from {caddr[0]}")
                     csession = SessionHandler(cltconn)
                     csession.start()
-            except KeyboardInterrupt:
-                print("Server is shutting down gracefully.")
-            finally:
-                self.stop()
+        except OSError as e:
+            if e.errno == socket.errno.EADDRINUSE:
+                print(f"Port {self.port} is already in use. Try running the server on a different port.")
+            else:
+                raise e
+        except KeyboardInterrupt:
+            print("Server is shutting down gracefully.")
+        finally:
+            self.stop()
 
 
 class SessionHandler(threading.Thread):
