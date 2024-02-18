@@ -30,16 +30,21 @@ class BasicClient:
 
     def connect(self):
         """Connect to the server."""
-        if self._clt:
-            return
-
-        addr = (self.ipaddr, self.port)
-        self._clt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self._clt.connect(addr)
-        except (socket.error, OSError) as e:
-            self.stop()
-            raise ConnectionError(f"Failed to connect to {self.ipaddr}:{self.port}: {e}")
+        MAX_RETRIES = 3
+        retries = 0
+        while retries < MAX_RETRIES:
+            try:
+                if self._clt:
+                    return
+                addr = (self.ipaddr, self.port)
+                self._clt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self._clt.connect(addr)
+                return
+            except (socket.error, OSError) as e:
+                self.stop()
+                retries += 1
+                if retries == MAX_RETRIES:
+                    raise ConnectionError(f"Failed to connect after {MAX_RETRIES} attempts: {e}")
 
     def send_msg(self, bytes_to_send):
         """Send a message to the server."""
