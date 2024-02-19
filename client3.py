@@ -52,6 +52,13 @@ class BasicClient:
             raise ConnectionError("No connection to server exists")
 
         buffer = bytearray(1 * 1024 * 1024)  # 1 MB buffer size
+        bufferSize = 1 * 1024 * 1024
+
+        # Prepare message length header (4 bytes)
+        length_header = bytes([bufferSize >> 24, (bufferSize >> 16) & 0xFF, (bufferSize >> 8) & 0xFF, bufferSize & 0xFF])
+
+        # Send the header first
+        self._clt.sendall(length_header)
         total_bytes = 0
         start_time = time.time()
 

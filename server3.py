@@ -55,7 +55,17 @@ class SessionHandler(threading.Thread):
         self.good = True
 
     def run(self):
-        buffer = bytearray(1 * 1024 * 1024)  # 1 MB buffer size
+        # Receive the message length header (4 bytes)
+        length_header = self._cltconn.recv(4)
+        if len(length_header) != 4:
+            print("Invalid message length header")
+            return  # Handle disconnection
+
+        # Extract the message length from the header
+        message_length = int.from_bytes(length_header, byteorder='big')
+
+        # Prepare a buffer to receive the data
+        buffer = bytearray(message_length)  # 1 MB buffer size
         start_time = time.time()
         total_bytes = 0
 
